@@ -1,0 +1,134 @@
+@startuml diagrama_sequencia_mineracao
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam backgroundColor white
+skinparam sequence {
+    ArrowColor #444444
+    ActorBorderColor #444444
+    LifeLineBorderColor #888888
+    ParticipantBackgroundColor #F8F8F8
+    ParticipantBorderColor #333333
+}
+
+title Fluxo de Mineração e Construção de Grafos\n(GithubMiner + GitHub API + AdjacencyListGraph)
+
+actor       "Usuário"          as User
+participant "main.py"          as Main
+participant "GithubMiner"      as Miner
+participant "GitHub REST API"  as API
+participant "AdjacencyListGraph\n(G1/G2/G3/Integrated)" as Graph
+
+== Inicialização ==
+
+User  -> Main   : executar main()
+Main  -> Miner  : GithubMiner()
+activate Miner
+Miner -> Miner  : load_dotenv()\nlê GITHUB_TOKEN e GITHUB_REPOSITORY
+Miner -> Main   : <<instância criada>>
+deactivate Miner
+
+== Fase de Mineração: fetch_data(pages) ==
+
+Main  -> Miner  : fetch_data(pages=3)
+activate Miner
+
+loop para cada página em [1..pages]
+
+    Miner -> API  : GET /repos/{owner}/{repo}/issues\n?state=all&per_page=100&page={p}
+    activate API
+    API  --> Miner : lista de issues/PRs (JSON)
+    deactivate API
+
+    loop para cada item na lista
+
+        Miner -> Miner : extrai author, detecta is_PR\nadiciona author a users_set
+
+        ' ── Comentários (sempre processados) ──
+        Miner -> API  : GET {item.comments_url}
+        activate API
+        API  --> Miner : lista de comentários
+        deactivate API
+
+        loop para cada comentário
+            alt commenter != author
+                Miner -> Miner : edges_g1[(commenter→author)] += 1\nedges_integrated[(commenter→author)] += 2
+                opt item NÃO é PR (Issue)
+                    Miner -> Miner : edges_integrated[(author→commenter)] += 3
+                end
+            else commenter == author
+                Miner -> Miner : ignora auto-comentário
+            end
+        end
+
+        alt item NÃO é PR (Issue)
+
+            alt state == "closed" AND closed_by != null
+                Miner -> Miner : edges_g2[(closer→author)] += 1
+            end
+
+        else item É PR
+
+            Miner -> API  : GET /repos/{owner}/{repo}/pulls/{number}/reviews
+            activate API
+            API  --> Miner : lista de reviews
+            deactivate API
+
+            loop para cada review
+                Miner -> Miner : edges_g3[(reviewer→author)] += 1\nedges_integrated[(reviewer→author)] += 4
+            end
+
+            Miner -> API  : GET /repos/{owner}/{repo}/pulls/{number}
+            activate API
+            API  --> Miner : detalhes do PR
+            deactivate API
+
+            alt merged == true AND merged_by != null
+                Miner -> Miner : edges_g3[(merger→author)] += 1\nedges_integrated[(merger→author)] += 5
+            end
+
+        end
+
+    end
+
+end
+
+Miner --> Main : <<dados acumulados>>
+deactivate Miner
+
+== Fase de Construção: build_graphs() ==
+
+Main  -> Miner  : build_graphs()
+activate Miner
+
+Miner -> Miner  : ordena users_set alfabeticamente\ncria user_to_id e id_to_user
+
+Miner -> Graph  : AdjacencyListGraph(numVertices) × 4\n(G1, G2, G3, G_Integrated)
+activate Graph
+Graph --> Miner : instâncias criadas
+deactivate Graph
+
+Miner -> Graph  : g.vertexLabels = [usernames...]
+activate Graph
+Graph --> Miner : labels definidas
+deactivate Graph
+
+loop para cada grafo e seus edges_dict
+    loop para cada (u_name, v_name, weight)
+        Miner -> Graph  : addEdge(u_id, v_id)
+        Miner -> Graph  : setEdgeWeight(u_id, v_id, weight)
+    end
+end
+
+Miner --> Main  : (g1, g2, g3, g_integrated)
+deactivate Miner
+
+== Fase de Análise ==
+
+Main -> Main : GraphAnalytics(g_integrated)
+Main -> Main : calcula métricas e exibe resultados
+Main -> Graph : exportToGEPHI("resultados/.../gephi.csv")
+
+Main --> User : resultados exibidos + CSV gerado
+
+@enduml
