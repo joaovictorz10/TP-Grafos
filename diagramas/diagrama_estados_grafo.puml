@@ -1,0 +1,93 @@
+@startuml diagrama_estados_grafo
+
+skinparam backgroundColor white
+skinparam state {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    ArrowColor #444444
+    StartColor #333333
+    EndColor #333333
+}
+skinparam note {
+    BackgroundColor #EEF4FF
+    BorderColor #5566AA
+}
+
+title Diagrama de Estados — AbstractGraph\nCiclo de Vida do Grafo
+
+[*] --> Criado : __init__(numVertices)\nnumVertices > 0
+
+state Criado {
+    [*] --> [*]
+}
+note right of Criado
+  edgeCount == 0
+  isEmptyGraph() == True
+  vértices existem, sem arestas
+  _vertexLabels e _vertexWeights
+  inicializados com defaults
+end note
+
+Criado --> ErroInicializacao : numVertices <= 0\n(ValueError)
+ErroInicializacao --> [*]
+
+Criado --> Populado : addEdge(u, v)\nsetEdgeWeight(u, v, w)\nvertexLabels = [...]
+
+state Populado {
+    state "Parcialmente\nConectado" as Parcial
+    state "Completo" as Completo
+    state "Conectado" as Conectado
+
+    [*] --> Parcial : primeira aresta adicionada
+    Parcial --> Completo  : todas n*(n-1) arestas presentes\n[isCompleteGraph() == True]
+    Parcial --> Conectado : todos os vértices alcançáveis\n[isConnected() == True]
+    Completo --> Conectado
+}
+note right of Populado
+  edgeCount > 0
+  isEmptyGraph() == False
+  hasEdge(u,v) consultas válidas
+  graus in/out calculáveis
+end note
+
+Populado --> Criado       : removeEdge() até edgeCount == 0
+Populado --> ErroAresta   : addEdge(v, v) — self-loop\n(ValueError)
+Populado --> ErroVertice  : acesso com índice inválido\n(IndexError via _check_vertex)
+
+ErroAresta  --> Populado : exceção capturada\nestado não muda
+ErroVertice --> Populado : exceção capturada\nestado não muda
+
+Populado --> Analisado : GraphAnalytics(graph)\ninstanciado
+
+state Analisado {
+    state "Cache Frio" as CacheFrio
+    state "Cache Quente" as CacheQuente
+
+    [*] --> CacheFrio : _neighbors = None
+    CacheFrio --> CacheQuente : _get_neighbors()\nprimeira chamada de\nclustering ou Louvain
+}
+note right of Analisado
+  Métricas calculadas sob demanda:
+  density, pagerank, betweenness,
+  closeness, clustering,
+  assortativity, communities,
+  eigenvector, bridging_ties
+end note
+
+Analisado --> Exportado : exportToGEPHI(path)\nCSV gerado
+
+state Exportado {
+    [*] --> [*]
+}
+note right of Exportado
+  grafo_integrado.csv criado
+  Colunas: Source, Target, Weight
+  Uma linha por aresta dirigida
+  Grafo ainda disponível para
+  mais consultas após export
+end note
+
+Exportado --> Analisado : novas métricas\ncalculadas após export
+Exportado --> [*]        : objeto descartado\napós uso em main
+
+@enduml

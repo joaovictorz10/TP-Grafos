@@ -1,0 +1,86 @@
+@startuml diagrama_componentes
+
+skinparam backgroundColor white
+skinparam component {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    ArrowColor #555555
+}
+skinparam package {
+    BackgroundColor #EEF4FF
+    BorderColor #5566AA
+    FontStyle bold
+}
+skinparam database {
+    BackgroundColor #FFF8E1
+    BorderColor #F9A825
+}
+skinparam cloud {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+}
+skinparam node {
+    BackgroundColor #FCE4EC
+    BorderColor #C62828
+}
+
+title Arquitetura de Componentes\nTP-Grafos-2.0
+
+' ── Sistemas Externos ──────────────────────────────────
+cloud "GitHub REST API" as GH_API {
+    [/issues]
+    [/pulls/{id}/reviews]
+    [/pulls/{id}]
+}
+
+database ".env\n(GITHUB_TOKEN\nGITHUB_REPOSITORY)" as EnvFile
+
+node "GEPHI CSV\n(resultados/.../*.csv)" as GephiFile
+
+' ── Camadas do Sistema ─────────────────────────────────
+package "Camada de Orquestração" {
+    [app.py] as App
+    [main.py] as Main
+}
+
+package "Camada de Mineração" {
+    [GithubMiner\n(miner.py)] as Miner
+}
+
+package "Camada Core — Estruturas de Grafos" {
+    [AbstractGraph\n(abstract_graph.py)] as AbsGraph
+    [AdjacencyListGraph\n(adjacency_list_graph.py)] as ListGraph
+    [AdjacencyMatrixGraph\n(adjacency_matrix_graph.py)] as MatrixGraph
+}
+
+package "Camada de Análise" {
+    [GraphAnalytics\n(graph_analytics.py)] as Analytics
+}
+
+' ── Relacionamentos ────────────────────────────────────
+
+' Orquestração usa Mineração e Análise
+Main  --> Miner    : instancia e chama\nfetch_data() / build_graphs()
+App   --> Miner    : instancia e chama
+Main  --> Analytics : instancia com\ng_integrated
+App   --> Analytics : instancia com\ng_integrated
+App   ..> MatrixGraph : <<creates>>\ncópia do grafo integrado\npara demonstração da API
+
+' Mineração lê configuração e acessa API
+Miner --> EnvFile  : lê GITHUB_TOKEN\ne GITHUB_REPOSITORY
+Miner --> GH_API   : GET requests\nHTTP/JSON
+
+' Mineração cria grafos
+Miner ..> ListGraph : <<creates>>\n4 instâncias\n(G1, G2, G3, Integrated)
+
+' Core: herança
+AbsGraph <|-- ListGraph  : extends
+AbsGraph <|-- MatrixGraph : extends
+
+' Analytics usa grafo
+Analytics --> AbsGraph : usa <<AbstractGraph>>\ng_integrated
+
+' Export
+AbsGraph --> GephiFile : exportToGEPHI()\nCSV (Source, Target, Weight)
+
+@enduml

@@ -1,0 +1,110 @@
+@startuml diagrama_estados_miner
+
+skinparam backgroundColor white
+skinparam state {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    ArrowColor #444444
+    StartColor #333333
+    EndColor #333333
+}
+skinparam note {
+    BackgroundColor #EEF4FF
+    BorderColor #5566AA
+}
+
+title Diagrama de Estados — GithubMiner\nCiclo de Vida do Objeto
+
+[*] --> Inicializado : __init__()
+
+state Inicializado {
+    [*] --> [*]
+}
+note right of Inicializado
+  token carregado do .env
+  users_set = set()
+  edges_g1/g2/g3/integrated = {}
+  nenhum dado coletado
+end note
+
+Inicializado --> Minerando : fetch_data(pages)
+
+state Minerando {
+    [*] --> BuscandoPagina
+    BuscandoPagina --> ProcessandoItem : HTTP 200 OK
+    BuscandoPagina --> BuscandoPagina  : próxima página
+    ProcessandoItem --> AnalisandoComentarios : extrai author
+    AnalisandoComentarios --> DecisaoTipo : comentários coletados
+    state DecisaoTipo <<choice>>
+    DecisaoTipo --> ProcessandoIssue  : is_PR == false
+    DecisaoTipo --> ProcessandoPR     : is_PR == true
+    ProcessandoIssue --> BuscandoPagina : item processado
+    ProcessandoPR    --> BuscandoPagina : item processado
+    BuscandoPagina --> [*] : todas as páginas concluídas
+}
+note right of Minerando
+  Loop: página 1..N
+  Para cada item:
+  * comentários → edges_g1
+  * fechamentos → edges_g2
+  * reviews/merges → edges_g3
+  * tudo → edges_integrated
+end note
+
+Minerando --> DadosAcumulados : fetch_data() concluído
+Minerando --> Erro             : Exception (HTTP falha crítica\nou token inválido)
+
+state DadosAcumulados {
+    [*] --> [*]
+}
+note right of DadosAcumulados
+  users_set populado
+  edges_g1/g2/g3/integrated
+  preenchidos com pesos
+  acumulados
+end note
+
+DadosAcumulados --> CriandoGrafos : build_graphs()
+
+state CriandoGrafos {
+    [*] --> MapeandoUsuarios
+    MapeandoUsuarios --> InstanciandoGrafos : user_to_id criado
+    InstanciandoGrafos --> PopulandoArestas : 4 grafos vazios criados
+    PopulandoArestas --> [*] : arestas e pesos definidos
+}
+note right of CriandoGrafos
+  Ordena users_set
+  Cria user_to_id / id_to_user
+  Instancia 4 AdjacencyListGraph
+  Define vertexLabels
+  Popula arestas com pesos
+end note
+
+CriandoGrafos --> GrafosConstruidos : build_graphs() retorna (g1,g2,g3,gI)
+CriandoGrafos --> Erro               : ValueError (numVertices == 0)
+
+state GrafosConstruidos {
+    [*] --> [*]
+}
+note right of GrafosConstruidos
+  4 grafos prontos para análise:
+  G1 (comentários)
+  G2 (fechamentos)
+  G3 (reviews/merges)
+  G_Integrated (combinado)
+end note
+
+GrafosConstruidos --> [*] : objeto descartado\napós uso em main
+
+state Erro {
+    [*] --> [*]
+}
+note right of Erro
+  Exceção capturada em main()
+  Mensagem de erro exibida
+  Execução encerrada
+end note
+
+Erro --> [*]
+
+@enduml
