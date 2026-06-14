@@ -1,0 +1,85 @@
+@startuml diagrama_atividades_analytics
+
+skinparam backgroundColor white
+skinparam activity {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    ArrowColor #444444
+    DiamondBackgroundColor #FFFDE7
+    DiamondBorderColor #888800
+}
+skinparam note {
+    BackgroundColor #EEF4FF
+    BorderColor #5566AA
+}
+
+title GraphAnalytics — Fluxo de Execução de Métricas\n(dependências entre algoritmos e uso de cache)
+
+start
+
+:GraphAnalytics(g_integrated)\ncache _neighbors = None;
+
+:get_density()\n→ edges / (n × (n-1));
+
+note right: Independente\nO(1) com contadores cacheados
+
+' ── Métricas independentes em paralelo ──
+fork
+    :get_pagerank(iterations=100, damping=0.85)\nPower iteration;
+    note right: O(iter × n²)
+fork again
+    :get_betweenness_centrality()\nBrandes algorithm + BFS;
+    note right: O(n × (n + m))
+fork again
+    :get_eigenvector_centrality(iterations=100)\nPower method;
+    note right: O(iter × m)
+fork again
+    :get_assortativity()\nNewman (correlação de out-graus);
+    note right: O(m)
+fork again
+    :get_closeness_centrality(u)\npara cada vértice (BFS);
+    note right: O(n × (n + m))
+end fork
+
+note right
+  Métricas acima são
+  independentes entre si.
+  Podem ser executadas
+  em qualquer ordem.
+end note
+
+' ── Pré-condição: cache de vizinhos ──
+:_get_neighbors()\ncalcula e cacheia lista de vizinhança\n(visão não-direcionada do grafo);
+
+note right
+  Chamada automaticamente
+  na primeira vez que for
+  necessário. Cache reutilizado
+  pelas métricas abaixo.
+end note
+
+' ── Métricas dependentes do cache ──
+fork
+    :get_clustering_coefficient()\ncoeficiente local por vértice;
+    :get_average_clustering()\nmédia dos coeficientes;
+fork again
+    :get_communities_louvain()\ngreedy modularity (Louvain simplificado)\nretorna lista de IDs de comunidades;
+end fork
+
+' ── Bridging Ties depende de Louvain ──
+:get_bridging_ties(communities)\nidentifica conectores entre comunidades\nretorna lista de (vertex, label, num_communities);
+
+note right
+  Depende do resultado de
+  get_communities_louvain()
+  (passado como argumento)
+end note
+
+' ── Export final ──
+:exibir todos os resultados\n(top PageRank, top Betweenness, etc.);
+
+:g_integrated.exportToGEPHI(path)\nSource, Target, Weight → CSV;
+
+stop
+
+@enduml

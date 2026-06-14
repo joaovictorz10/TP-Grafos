@@ -1,0 +1,103 @@
+@startuml diagrama_atividades_fetch
+
+skinparam backgroundColor white
+skinparam activity {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    ArrowColor #444444
+    DiamondBackgroundColor #FFFDE7
+    DiamondBorderColor #888800
+}
+skinparam note {
+    BackgroundColor #EEF4FF
+    BorderColor #5566AA
+}
+
+title GithubMiner.fetch_data(pages)\nAlgoritmo de Mineração de Dados
+
+start
+
+:Inicializar variáveis\n(users_set, edges_g1/g2/g3, edges_integrated);
+
+:Definir page = 1;
+
+while (page <= pages?) is (sim)
+
+    :GET /repos/{owner}/{repo}/issues\n?state=all&per_page=100&page={page};
+
+    if (resposta HTTP 200?) then (não)
+        :print aviso de erro\nretornar lista vazia;
+    else (sim)
+        :iterar sobre lista de items;
+
+        while (há próximo item?) is (sim)
+
+            :extrair author\nadicionar author a users_set\ndetectar is_PR (chave "pull_request");
+
+            :GET {item.comments_url};
+
+            while (há próximo comentário?) is (sim)
+                :commenter = autor do comentário;
+                if (commenter != author?) then (sim)
+                    :edges_g1[(commenter→author)] += 1;
+                    :edges_integrated[(commenter→author)] += 2;
+                else (não)
+                    :ignorar (auto-comentário);
+                endif
+            endwhile (não)
+
+            if (item é PR?) then (não — é Issue)
+
+                if (state == "closed" AND\nclosed_by != null?) then (sim)
+                    :closer = closed_by.login\nedges_g2[(closer→author)] += 1;
+                else (não)
+                    :nenhuma aresta G2;
+                endif
+
+                :edges_integrated[(author→commenter)] += 3\n(autor responde a comentadores);
+
+            else (sim — é PR)
+
+                :GET /repos/{owner}/{repo}/pulls/{number}/reviews;
+
+                while (há próximo review?) is (sim)
+                    :reviewer = review.user.login;
+                    if (reviewer != author?) then (sim)
+                        :edges_g3[(reviewer→author)] += 1;
+                        :edges_integrated[(reviewer→author)] += 4;
+                    else (não)
+                    endif
+                endwhile (não)
+
+                :GET /repos/{owner}/{repo}/pulls/{number};
+
+                if (merged == true AND\nmerged_by != null?) then (sim)
+                    :merger = merged_by.login\nedges_g3[(merger→author)] += 1;
+                    :edges_integrated[(merger→author)] += 5;
+                else (não)
+                    :PR não foi mergeado;
+                endif
+
+            endif
+
+        endwhile (não)
+    endif
+
+    :page += 1;
+
+endwhile (não)
+
+note right
+  Pesos acumulados por tipo:
+  * G1: comentários
+  * G2: fechamento de issues
+  * G3: reviews + merges
+  * Integrated: tudo combinado
+    (2, 3, 4 ou 5 por interação)
+end note
+
+:Mineração concluída\nDados prontos para build_graphs();
+
+stop
+
+@enduml

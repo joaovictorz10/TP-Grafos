@@ -1,0 +1,157 @@
+@startuml diagrama_classes
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor white
+skinparam class {
+    BackgroundColor #F8F8F8
+    BorderColor #333333
+    ArrowColor #555555
+}
+
+' ─────────────────────────────────────────
+'  CLASSE ABSTRATA BASE
+' ─────────────────────────────────────────
+abstract class AbstractGraph {
+    + numVertices : int
+    - _vertexWeights : list[float]
+    - _vertexLabels : list[str]
+    __
+    + __init__(numVertices: int) : None
+    + getVertexCount() : int
+    + {abstract} getEdgeCount() : int
+    + {abstract} hasEdge(u: int, v: int) : bool
+    + {abstract} addEdge(u: int, v: int) : None
+    + {abstract} removeEdge(u: int, v: int) : None
+    + {abstract} getVertexInDegree(u: int) : int
+    + {abstract} getVertexOutDegree(u: int) : int
+    + {abstract} setEdgeWeight(u: int, v: int, w: float) : None
+    + {abstract} getEdgeWeight(u: int, v: int) : float
+    + isSucessor(u: int, v: int) : bool
+    + isPredessor(u: int, v: int) : bool
+    + isDivergent(u1: int, v1: int, u2: int, v2: int) : bool
+    + isConvergent(u1: int, v1: int, u2: int, v2: int) : bool
+    + isIncident(u: int, v: int, x: int) : bool
+    + setVertexWeight(v: int, w: float) : None
+    + getVertexWeight(v: int) : float
+    + isConnected() : bool
+    + isEmptyGraph() : bool
+    + isCompleteGraph() : bool
+    + exportToGEPHI(path: str) : None
+    - _check_vertex(v: int) : None
+    + vertexLabels : list[str]  <<property>>
+    + vertexWeights : list[float]  <<property>>
+}
+
+' ─────────────────────────────────────────
+'  IMPLEMENTAÇÃO POR LISTA DE ADJACÊNCIA
+' ─────────────────────────────────────────
+class AdjacencyListGraph {
+    + adj_list : list[dict[int, float]]
+    - _edgeCount : int
+    __
+    + __init__(numVertices: int) : None
+    + getEdgeCount() : int
+    + hasEdge(u: int, v: int) : bool
+    + addEdge(u: int, v: int) : None
+    + removeEdge(u: int, v: int) : None
+    + getVertexInDegree(u: int) : int
+    + getVertexOutDegree(u: int) : int
+    + setEdgeWeight(u: int, v: int, w: float) : None
+    + getEdgeWeight(u: int, v: int) : float
+}
+
+' ─────────────────────────────────────────
+'  IMPLEMENTAÇÃO POR MATRIZ DE ADJACÊNCIA
+' ─────────────────────────────────────────
+class AdjacencyMatrixGraph {
+    + matrix : list[list[float | None]]
+    - _edgeCount : int
+    - _inDegrees : list[int]
+    __
+    + __init__(numVertices: int) : None
+    + getEdgeCount() : int
+    + hasEdge(u: int, v: int) : bool
+    + addEdge(u: int, v: int) : None
+    + removeEdge(u: int, v: int) : None
+    + getVertexInDegree(u: int) : int
+    + getVertexOutDegree(u: int) : int
+    + setEdgeWeight(u: int, v: int, w: float) : None
+    + getEdgeWeight(u: int, v: int) : float
+}
+
+' ─────────────────────────────────────────
+'  ANALYTICS
+' ─────────────────────────────────────────
+class GraphAnalytics {
+    + graph : AbstractGraph
+    + n : int
+    - _neighbors : list[set[int]] | None
+    __
+    + __init__(graph: AbstractGraph) : None
+    - _get_neighbors() : list[set[int]]
+    + get_density() : float
+    + get_degree_centrality(u: int) : dict
+    + get_pagerank(iterations: int, damping_factor: float) : list[float]
+    + get_eigenvector_centrality(iterations: int, tolerance: float) : list[float]
+    + get_betweenness_centrality() : list[float]
+    + get_closeness_centrality(u: int) : float
+    + get_clustering_coefficient() : list[float]
+    + get_average_clustering() : float
+    + get_assortativity() : float
+    + get_communities_louvain() : list[int]
+    + get_bridging_ties(communities: list[int]) : list[tuple]
+}
+
+' ─────────────────────────────────────────
+'  MINERAÇÃO GITHUB
+' ─────────────────────────────────────────
+class GithubMiner {
+    + token : str
+    + repo : str
+    + headers : dict[str, str]
+    + base_url : str
+    + users_set : set[str]
+    + user_to_id : dict[str, int]
+    + id_to_user : dict[int, str]
+    + edges_g1 : defaultdict[tuple, float]
+    + edges_g2 : defaultdict[tuple, float]
+    + edges_g3 : defaultdict[tuple, float]
+    + edges_integrated : defaultdict[tuple, float]
+    __
+    + __init__() : None
+    - _request(endpoint: str, params: dict | None) : list
+    + fetch_data(pages: int) : None
+    + build_graphs() : tuple[AdjacencyListGraph, AdjacencyListGraph, AdjacencyListGraph, AdjacencyListGraph]
+}
+
+' ─────────────────────────────────────────
+'  ORQUESTRAÇÃO (main.py)
+' ─────────────────────────────────────────
+class Main << (M,#FF7700) module>> {
+    + main() : None
+    + run_detailed_analysis(graph: AbstractGraph, output_path: str) : None
+}
+
+' ─────────────────────────────────────────
+'  RELACIONAMENTOS
+' ─────────────────────────────────────────
+
+' Herança
+AbstractGraph <|-- AdjacencyListGraph
+AbstractGraph <|-- AdjacencyMatrixGraph
+
+' Agregação: GraphAnalytics referencia um AbstractGraph já existente,
+' que continua a existir e é usado por outros (ex.: exportToGEPHI)
+' independente do ciclo de vida do GraphAnalytics
+GraphAnalytics "1" o--> "1" AbstractGraph : graph
+
+' Dependência: GithubMiner cria 4 instâncias de AdjacencyListGraph
+GithubMiner ..> "4" AdjacencyListGraph : <<creates>>\n(g1, g2, g3, g_integrated)
+
+' Dependências de orquestração (main.py)
+Main ..> GithubMiner : <<creates>>\nminer = GithubMiner()
+Main ..> GraphAnalytics : <<creates>>\nGraphAnalytics(g_integrated)
+Main ..> AdjacencyListGraph : <<uses>>\ng1, g2, g3, g_integrated
+
+@enduml
