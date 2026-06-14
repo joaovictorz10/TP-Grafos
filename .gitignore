@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Credenciais e configuração local
+.env
+*.env
+
+# Pytest / cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs / editores
+.vscode/
+.idea/
+*.swp
+
+# LaTeX (artefatos de compilação)
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
