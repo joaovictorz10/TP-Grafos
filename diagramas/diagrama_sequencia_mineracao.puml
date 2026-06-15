@@ -11,15 +11,16 @@ skinparam sequence {
     ParticipantBorderColor #333333
 }
 
-title Fluxo de Mineração e Construção de Grafos\n(GithubMiner + GitHub API + AdjacencyListGraph)
+title Fluxo Completo do Pipeline — Etapas 1, 2 e 3\n(GithubMiner + AdjacencyListGraph + GraphAnalytics)
 
 actor       "Usuário"          as User
 participant "main.py"          as Main
-participant "GithubMiner"      as Miner
+participant "GithubMiner\n(Etapa 1)" as Miner
 participant "GitHub REST API"  as API
-participant "AdjacencyListGraph\n(G1/G2/G3/Integrated)" as Graph
+participant "AdjacencyListGraph\n(Etapa 2 - G1/G2/G3/Integrado)" as Graph
+participant "GraphAnalytics\n(Etapa 3)" as Analytics
 
-== Inicialização ==
+== ETAPA 1 - Inicialização ==
 
 User  -> Main   : executar main()
 Main  -> Miner  : GithubMiner()
@@ -28,7 +29,7 @@ Miner -> Miner  : load_dotenv()\nlê GITHUB_TOKEN e GITHUB_REPOSITORY
 Miner -> Main   : <<instância criada>>
 deactivate Miner
 
-== Fase de Mineração: fetch_data(pages) ==
+== ETAPA 1 - Mineração de dados: fetch_data(pages) ==
 
 Main  -> Miner  : fetch_data(pages=3)
 activate Miner
@@ -96,14 +97,14 @@ end
 Miner --> Main : <<dados acumulados>>
 deactivate Miner
 
-== Fase de Construção: build_graphs() ==
+== ETAPA 2 - Construção dos grafos: build_graphs() ==
 
 Main  -> Miner  : build_graphs()
 activate Miner
 
 Miner -> Miner  : ordena users_set alfabeticamente\ncria user_to_id e id_to_user
 
-Miner -> Graph  : AdjacencyListGraph(numVertices) × 4\n(G1, G2, G3, G_Integrated)
+Miner -> Graph  : AdjacencyListGraph(numVertices) × 4\n(G1, G2, G3, G_Integrado)
 activate Graph
 Graph --> Miner : instâncias criadas
 deactivate Graph
@@ -120,15 +121,21 @@ loop para cada grafo e seus edges_dict
     end
 end
 
-Miner --> Main  : (g1, g2, g3, g_integrated)
+Miner --> Main  : (g1, g2, g3, g_integrado)
 deactivate Miner
 
-== Fase de Análise ==
+== ETAPA 3 - Métricas de redes complexas ==
 
-Main -> Main : GraphAnalytics(g_integrated)
-Main -> Main : calcula métricas e exibe resultados
-Main -> Graph : exportToGEPHI("resultados/.../gephi.csv")
+Main -> Analytics : GraphAnalytics(g_integrado)
+activate Analytics
 
-Main --> User : resultados exibidos + CSV gerado
+Main -> Analytics : get_density()\nget_pagerank()\nget_betweenness_centrality()\nget_closeness_centrality()\nget_average_clustering()\nget_assortativity()\nget_communities_louvain()\nget_eigenvector_centrality()\nget_bridging_ties(communities)
+Analytics --> Main : métricas calculadas\n(densidade, PageRank, betweenness,\nclustering, assortatividade, comunidades...)
+
+deactivate Analytics
+
+Main -> Graph : exportToGEPHI("resultados/.../grafo_integrado.csv")\n+ grafos G1, G2, G3
+
+Main --> User : relatórios .txt + CSVs gerados em\nresultados/<owner>-<repo>/
 
 @enduml
