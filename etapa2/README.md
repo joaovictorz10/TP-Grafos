@@ -26,6 +26,31 @@ trabalho.
 - Índices inválidos e operações inconsistentes lançam exceções;
 - Nenhuma biblioteca de grafos pronta (ex.: networkX) é utilizada.
 
+## Exemplo de uso da API
+
+```python
+from etapa2.core.adjacency_list_graph import AdjacencyListGraph
+
+g = AdjacencyListGraph(3)
+g.vertexLabels = ["alice", "bob", "carol"]
+
+g.addEdge(0, 1)              # alice -> bob (peso padrão 1.0)
+g.setEdgeWeight(0, 1, 2.0)   # comentário, peso 2
+
+g.addEdge(1, 2)              # bob -> carol
+g.setEdgeWeight(1, 2, 4.0)   # revisão, peso 4
+
+print(g.getVertexCount())       # 3
+print(g.getEdgeCount())         # 2
+print(g.hasEdge(0, 1))          # True
+print(g.getVertexOutDegree(0))  # 1
+print(g.isConnected())          # True (todos alcançáveis ignorando direção)
+```
+
+`AdjacencyMatrixGraph` expõe exatamente a mesma API — a escolha de implementação não
+altera o comportamento observável, apenas a representação interna (matriz vs. lista
+de adjacência).
+
 ## Aplicação de demonstração
 
 `demo_api.py` é a aplicação separada que consome a API e demonstra todas as operações

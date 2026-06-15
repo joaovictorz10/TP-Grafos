@@ -1,5 +1,6 @@
 # TP-Grafos — Análise da Rede de Colaboração em Repositórios do GitHub
-Trabalho prático da disciplina *Teoria de Grafos e Computabilidade* — PUC Minas,
+
+Trabalho prático da disciplina **Teoria de Grafos e Computabilidade** — PUC Minas,
 Curso de Engenharia de Software (Prof. Leonardo V. Cardoso, 2026/1).
 
 Ferramenta que minera as interações entre colaboradores de um repositório público do
@@ -16,28 +17,28 @@ analisar a colaboração do projeto.
 
 ## Repositório analisado
 
-[devlikeapro/waha](https://github.com/devlikeapro/waha) (WAHA — WhatsApp HTTP API),
+[`devlikeapro/waha`](https://github.com/devlikeapro/waha) (WAHA — WhatsApp HTTP API),
 escolhido por ter mais de 5.000 estrelas e um volume significativo de issues, pull
 requests, revisões e comentários, garantindo uma rede de colaboração rica para análise.
 
 ## Visão geral do projeto
 
-O trabalho está organizado em *3 etapas*, cada uma em sua própria pasta, com código,
+O trabalho está organizado em **3 etapas**, cada uma em sua própria pasta, com código,
 testes e README específicos:
 
 | Etapa | Pasta | Conteúdo |
 | --- | --- | --- |
-| *Etapa 1* — Modelagem e mineração de dados | [etapa1/](etapa1/) | GithubMiner: coleta dados via API REST do GitHub e constrói os grafos G1, G2, G3 e o grafo integrado ponderado |
-| *Etapa 2* — Estrutura de grafos (API) | [etapa2/](etapa2/) | AbstractGraph, AdjacencyMatrixGraph, AdjacencyListGraph e a aplicação de demonstração demo_api.py |
-| *Etapa 3* — Análise do repositório | [etapa3/](etapa3/) | GraphAnalytics: centralidades, densidade, clustering, assortatividade, comunidades e bridging ties |
+| **Etapa 1** — Modelagem e mineração de dados | [`etapa1/`](etapa1/) | `GithubMiner`: coleta dados via API REST do GitHub e constrói os grafos G1, G2, G3 e o grafo integrado ponderado |
+| **Etapa 2** — Estrutura de grafos (API) | [`etapa2/`](etapa2/) | `AbstractGraph`, `AdjacencyMatrixGraph`, `AdjacencyListGraph` e a aplicação de demonstração `demo_api.py` |
+| **Etapa 3** — Análise do repositório | [`etapa3/`](etapa3/) | `GraphAnalytics`: centralidades, densidade, clustering, assortatividade, comunidades e bridging ties |
 
-O main.py, na raiz do projeto, é o *orquestrador final*: executa a mineração
+O `main.py`, na raiz do projeto, é o **orquestrador final**: executa a mineração
 (Etapa 1), monta o grafo integrado (Etapa 2) e roda todas as métricas (Etapa 3),
-exportando os resultados para resultados/<owner>-<repo>/.
+exportando os resultados para `resultados/<owner>-<repo>/`.
 
 ## Estrutura do projeto
 
-text
+```text
 TP-Grafos/
 ├── main.py                  # pipeline completo (mineração + métricas + relatórios)
 ├── requirements.txt
@@ -62,18 +63,36 @@ TP-Grafos/
 ├── relatorio/                # Relatório técnico em LaTeX (template SBC)
 ├── resultados/               # Saída gerada por main.py (CSVs para o Gephi + relatórios .txt)
 └── ROTEIRO_VIDEO.md          # Roteiro para a apresentação em vídeo
+```
 
+## Arquitetura
+
+A ferramenta segue um pipeline em 3 estágios, em que a saída de uma etapa alimenta a
+seguinte:
+
+1. **`GithubMiner`** (Etapa 1) consulta a API REST do GitHub e devolve, já no formato
+   de grafo, os três grafos brutos (`G1`, `G2`, `G3`) e o grafo integrado ponderado.
+2. **`AdjacencyListGraph` / `AdjacencyMatrixGraph`** (Etapa 2) são as estruturas de
+   dados que armazenam esses grafos e implementam toda a API obrigatória do trabalho
+   (consulta de arestas, graus, conectividade, exportação etc.), ambas herdando de
+   `AbstractGraph`.
+3. **`GraphAnalytics`** (Etapa 3) recebe qualquer grafo que implemente `AbstractGraph`
+   e calcula as métricas de redes complexas (centralidades, densidade, clustering,
+   assortatividade, comunidades e bridging ties).
+
+`main.py` orquestra as três etapas em sequência e grava os resultados (CSVs para o
+Gephi e relatórios `.txt`) em `resultados/<owner>-<repo>/`.
 
 ## Diagramas
 
-Os diagramas UML (fontes .puml em [diagramas/](diagramas/), renderizados como .png
-em [relatorio/relatorio tex/modelagem/](<relatorio/relatorio tex/modelagem/>)) descrevem
+Os diagramas UML (fontes `.puml` em [`diagramas/`](diagramas/), renderizados como `.png`
+em [`relatorio/relatorio tex/modelagem/`](<relatorio/relatorio tex/modelagem/>)) descrevem
 a arquitetura do sistema:
 
 ### Diagrama de classes
 
-Estrutura AbstractGraph → AdjacencyListGraph / AdjacencyMatrixGraph, e os módulos
-GithubMiner (Etapa 1) e GraphAnalytics (Etapa 3).
+Estrutura `AbstractGraph` → `AdjacencyListGraph` / `AdjacencyMatrixGraph`, e os módulos
+`GithubMiner` (Etapa 1) e `GraphAnalytics` (Etapa 3).
 
 ![Diagrama de classes](<relatorio/relatorio tex/modelagem/Diagrama_de_classes.png>)
 
@@ -86,21 +105,21 @@ análise e módulo de exportação.
 
 ### Diagrama de sequência — mineração
 
-Fluxo de chamadas entre main.py, GithubMiner e a API REST do GitHub durante
-fetch_data / build_graphs.
+Fluxo de chamadas entre `main.py`, `GithubMiner` e a API REST do GitHub durante
+`fetch_data` / `build_graphs`.
 
 ![Diagrama de sequência - mineração](<relatorio/relatorio tex/modelagem/diagrama_sequencia_mineracao.png>)
 
 ### Diagramas de atividades
 
-Fluxo de coleta de dados (diagrama_atividades_fetch.puml) e fluxo de cálculo das
-métricas (diagrama_atividades_analytics.puml).
+Fluxo de coleta de dados (`diagrama_atividades_fetch.puml`) e fluxo de cálculo das
+métricas (`diagrama_atividades_analytics.puml`).
 
 ![Diagrama de atividades - mineração](<relatorio/relatorio tex/modelagem/diagrama_atividades_fetch.png>)
 ![Diagrama de atividades - análise](<relatorio/relatorio tex/modelagem/diagrama_atividades_analytics.png>)
 
-> Os diagramas de estado (diagrama_estados_grafo.puml e diagrama_estados_miner.puml)
-> estão disponíveis apenas como fonte .puml em diagramas/ e podem ser renderizados em
+> Os diagramas de estado (`diagrama_estados_grafo.puml` e `diagrama_estados_miner.puml`)
+> estão disponíveis apenas como fonte `.puml` em `diagramas/` e podem ser renderizados em
 > [plantuml.com](https://www.plantuml.com/plantuml/uml/) ou em uma extensão PlantUML da IDE.
 
 ## Como executar
@@ -110,60 +129,64 @@ métricas (diagrama_atividades_analytics.puml).
 - Python 3.10+
 - Dependências:
 
-bash
+```bash
 pip install -r requirements.txt
+```
 
+### 2. Configurar o `.env`
 
-### 2. Configurar o .env
+Crie/edite o arquivo `.env` na raiz do projeto:
 
-Crie/edite o arquivo .env na raiz do projeto:
-
-bash
+```bash
 GITHUB_TOKEN=seu_token_pessoal_do_github
 GITHUB_REPOSITORY=devlikeapro/waha
+```
 
-
-O token precisa apenas de permissão de leitura pública (escopo public_repo ou
+O token precisa apenas de permissão de leitura pública (escopo `public_repo` ou
 nenhum escopo, para repositórios públicos) — usado para aumentar o limite de
-requisições à API do GitHub.
+requisições à API do GitHub (de 60 para 5.000 requisições/hora). Sem o token, a
+mineração ainda funciona, mas pode atingir o limite de requisições mais rápido.
 
 ### 3. Rodar os testes (não precisa de token nem internet)
 
-bash
+```bash
 python -m pytest -v
+```
 
+São **85 testes** no total, divididos por etapa:
 
-São *85 testes* no total, divididos por etapa:
-
-bash
+```bash
 python -m pytest etapa1/tests -v   # mineração (com mocks da API)
 python -m pytest etapa2/tests -v   # estrutura de grafos
 python -m pytest etapa3/tests -v   # métricas de redes complexas
-
+```
 
 ### 4. Rodar a aplicação de demonstração da API (Etapa 2)
 
-bash
+```bash
 python etapa2/demo_api.py
+```
 
-
-Demonstra *todas* as operações obrigatórias da API em AdjacencyListGraph e
-AdjacencyMatrixGraph, e em seguida minera o repositório configurado no .env para
+Demonstra **todas** as operações obrigatórias da API em `AdjacencyListGraph` e
+`AdjacencyMatrixGraph`, e em seguida minera o repositório configurado no `.env` para
 mostrar a API aplicada a dados reais.
 
 ### 5. Rodar o pipeline completo (Etapas 1, 2 e 3)
 
-bash
+```bash
 python main.py
-
+```
 
 Minera o repositório, constrói os 4 grafos, calcula todas as métricas e grava em
-resultados/<owner>-<repo>/:
+`resultados/<owner>-<repo>/`:
 
-- grafo_integrado.csv, grafo_comentarios.csv, grafo_fechamentos.csv,
-  grafo_revisoes_merges.csv — para importar no [Gephi](https://gephi.org/);
-- relatorio_mineracao.txt — estatísticas gerais e top 5 por PageRank;
-- analise_detalhada.txt — todas as métricas da Etapa 3 (top 10 por métrica).
+- `grafo_integrado.csv`, `grafo_comentarios.csv`, `grafo_fechamentos.csv`,
+  `grafo_revisoes_merges.csv` — para importar no [Gephi](https://gephi.org/);
+- `relatorio_mineracao.txt` — estatísticas gerais e top 5 por PageRank;
+- `analise_detalhada.txt` — todas as métricas da Etapa 3 (top 10 por métrica).
+
+O tempo de execução depende do tamanho do repositório e do limite de requisições da
+API do GitHub; para o `devlikeapro/waha`, a execução completa leva poucos minutos.
 
 ## Resultados obtidos (devlikeapro/waha)
 
@@ -177,13 +200,20 @@ resultados/<owner>-<repo>/:
 | Assortatividade | -0,249 (dissortativo) |
 | Comunidades detectadas (Louvain) | 135 |
 
-*Top 5 por PageRank*: devlikepro (mantenedor principal), bergpinheiro
-(co-mantenedor), vicentemarciot27, OrionZap, github-actions[bot].
+**Top 5 por PageRank**: `devlikepro` (mantenedor principal), `bergpinheiro`
+(co-mantenedor), `vicentemarciot27`, `OrionZap`, `github-actions[bot]`.
+
+A densidade próxima de zero é típica de redes sociais/colaborativas reais (poucas
+conexões em relação ao total possível). A assortatividade negativa indica um padrão
+*hub-and-spoke*: usuários muito conectados (mantenedores) interagem com muitos
+usuários pouco conectados (contribuidores ocasionais). Os detalhes matemáticos de
+cada métrica estão no [README da Etapa 3](etapa3/README.md#métricas-implementadas) e
+no relatório técnico.
 
 ## Relatório técnico
 
 O relatório completo (LaTeX, template SBC) está em
-[relatorio/relatorio tex/relatorio.tex](<relatorio/relatorio tex/relatorio.tex>),
+[`relatorio/relatorio tex/relatorio.tex`](<relatorio/relatorio tex/relatorio.tex>),
 contendo: justificativa da escolha do repositório, modelagem formal dos grafos,
 esquema de pesos, diagramas, definição matemática de cada métrica e discussão dos
 resultados.
@@ -191,4 +221,15 @@ resultados.
 ## Apresentação em vídeo
 
 O roteiro de fala para o vídeo de demonstração (até 2 minutos) está em
-[ROTEIRO_VIDEO.md](ROTEIRO_VIDEO.md).
+[`ROTEIRO_VIDEO.md`](ROTEIRO_VIDEO.md).
+
+## Solução de problemas
+
+- **`ModuleNotFoundError` ao rodar `etapa2/demo_api.py` ou `main.py`**: execute os
+  comandos a partir da raiz do projeto (`TP-Grafos/`), não de dentro das pastas
+  `etapa*/`.
+- **Erro de autenticação / limite de requisições da API do GitHub**: confira se o
+  `GITHUB_TOKEN` está definido no `.env` e se ainda é válido.
+- **`analise_detalhada.txt` vazio ou execução muito longa**: a mineração com
+  `pages=5` pode levar alguns minutos dependendo da resposta da API do GitHub;
+  aguarde a execução terminar (a seção "Concluído" aparece no console ao final).
