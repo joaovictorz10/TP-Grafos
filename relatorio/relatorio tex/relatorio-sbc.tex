@@ -1,10 +1,10 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[brazil]{babel}
-
-\usepackage[margin=2.5cm]{geometry}
 
 \usepackage{graphicx}
 \usepackage{float}
@@ -19,12 +19,9 @@
 \usepackage{xcolor}
 \usepackage{listings}
 
+\usepackage{url}
 \usepackage{hyperref}
 \hypersetup{hidelinks}
-
-\usepackage{fancyhdr}
-\usepackage{setspace}
-\usepackage{tocloft}
 
 \lstset{
 basicstyle=\ttfamily\small,
@@ -41,73 +38,47 @@ tabsize=2,
 breakatwhitespace=true
 }
 
-\setstretch{1.5}
-\setlength{\parindent}{1.27cm}
+\sloppy
 
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[R]{\small\textit{Análise de Colaboração em Repositórios GitHub}}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+\title{Análise da Rede de Colaboração em Repositórios do GitHub Utilizando Teoria de Grafos}
+
+\author{Davi Nunes Carvalho\inst{1}, Luiz Fernando Batista Moreira\inst{1},\\
+  Josué Carlos Goulart dos Reis\inst{1}, João Victor Russo Marquito\inst{1}}
+
+\address{Curso de Engenharia de Software --- Pontifícia Universidade Católica de Minas Gerais
+  (PUC Minas)\\
+  Belo Horizonte --- MG --- Brasil
+  \email{\{dnunes,lfbmoreira,jcgereis,jmarquito\}@sga.pucminas.br}
+}
 
 \begin{document}
 
-%-------------------------------------------------
-% CAPA
-%-------------------------------------------------
-\begin{titlepage}
-\centering
+\maketitle
 
-\vspace*{2cm}
-
-{\large PONTIFÍCIA UNIVERSIDADE CATÓLICA DE MINAS GERAIS\par}
-{\large Curso de Engenharia de Software\par}
-
-\vfill
-
-{\Large\bfseries ANÁLISE DA REDE DE COLABORAÇÃO EM REPOSITÓRIOS DO GITHUB\par}
-
-\vspace{0.5cm}
-
-{\large Utilizando Teoria de Grafos\par}
-
-\vfill
-
-{\large
-Davi Nunes Carvalho\\
-Luiz Fernando Batista Moreira\\
-Josué Carlos Goulart dos Reis\\
-João Victor Russo Marquito
-\par}
-
-\vfill
-
-{\large Belo Horizonte\par}
-{\large Junho de 2026\par}
-
-\end{titlepage}
-
-
-%-------------------------------------------------
-% RESUMO
-%-------------------------------------------------
 \begin{abstract}
-Este trabalho apresenta uma ferramenta para análise de redes de colaboração em repositórios do GitHub utilizando Teoria de Grafos. O sistema modela interações entre colaboradores (comentários, revisões, merges e fechamentos de issues) como grafos ponderados direcionados. A implementação inclui duas representações de grafos (lista de adjacência e matriz de adjacência), integração com a API REST do GitHub, cálculo de 10+ métricas de análise de rede (PageRank, betweenness, closeness, eigenvector, clustering, assortatividade, detecção de comunidades e bridging ties) e exportação CSV compatível com o Gephi. O projeto foi validado com 84 testes unitários e executado sobre o repositório \texttt{devlikeapro/waha}.
+  This work presents a tool for analyzing collaboration networks in GitHub
+  repositories using Graph Theory. The system models interactions among
+  collaborators (comments, reviews, merges, and issue closures) as directed
+  weighted graphs. The implementation includes two graph representations
+  (adjacency list and adjacency matrix), integration with the GitHub REST API,
+  computation of 10+ network analysis metrics (PageRank, betweenness, closeness,
+  eigenvector, clustering, assortativity, community detection, and bridging ties),
+  and CSV export compatible with Gephi. The project was validated with 84 unit
+  tests and executed over the \texttt{devlikeapro/waha} repository.
 \end{abstract}
 
-\newpage
-
-%-------------------------------------------------
-% SUMÁRIO
-%-------------------------------------------------
-\thispagestyle{empty}
-\tableofcontents
-\newpage
-
-\pagenumbering{arabic}
-\setcounter{page}{1}
-
-
+\begin{resumo}
+  Este trabalho apresenta uma ferramenta para análise de redes de colaboração em
+  repositórios do GitHub utilizando Teoria de Grafos. O sistema modela interações
+  entre colaboradores (comentários, revisões, merges e fechamentos de issues)
+  como grafos ponderados direcionados. A implementação inclui duas representações
+  de grafos (lista de adjacência e matriz de adjacência), integração com a API
+  REST do GitHub, cálculo de 10+ métricas de análise de rede (PageRank,
+  betweenness, closeness, eigenvector, clustering, assortatividade, detecção de
+  comunidades e bridging ties) e exportação CSV compatível com o Gephi. O projeto
+  foi validado com 84 testes unitários e executado sobre o repositório
+  \texttt{devlikeapro/waha}.
+\end{resumo}
 
 % ============================================================================
 % 1. INTRODUÇÃO
@@ -150,10 +121,10 @@ O sistema constrói quatro grafos $G = (V, E)$ direcionados ponderados simples, 
 
 Os quatro grafos modelam diferentes dimensões de interação:
 \begin{enumerate}
-  \item \textbf{G1} — comentários em issues e pull requests (peso 2 por interação)
-  \item \textbf{G2} — fechamentos de issues por outro usuário (peso não especificado no integrado)
-  \item \textbf{G3} — revisões/aprovações e merges de pull requests (pesos 4 e 5)
-  \item \textbf{Grafo Integrado} — fusão ponderada de G1, G2 e G3
+  \item \textbf{G1} --- comentários em issues e pull requests (peso 2 por interação)
+  \item \textbf{G2} --- fechamentos de issues por outro usuário (peso não especificado no integrado)
+  \item \textbf{G3} --- revisões/aprovações e merges de pull requests (pesos 4 e 5)
+  \item \textbf{Grafo Integrado} --- fusão ponderada de G1, G2 e G3
 \end{enumerate}
 
 \subsection{Estratégia de Coleta de Dados}
@@ -173,7 +144,7 @@ Cada interação é convertida em aresta direcionada com acumulação de pesos:
 
 \subsection{Esquema de Pesos}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Pesos das interações no grafo integrado. Hierarquia reflete relevância para colaboração técnica.}
   \label{tab:pesos}
@@ -198,9 +169,7 @@ A hierarquia de pesos reflete a tese de que revisões e merges requerem expertis
 
 Esta seção apresenta os artefatos UML que descrevem a arquitetura estática, comportamental e os fluxos de execução da ferramenta.
 
-% ----------------------------------------------------------------------------
 \subsection{Diagrama de Classes}
-% ----------------------------------------------------------------------------
 
 O sistema organiza sua arquitetura em três principais responsabilidades. A classe abstrata \texttt{AbstractGraph} define uma interface comum para operações sobre grafos, sendo implementada pelas classes concretas \texttt{AdjacencyListGraph} e \texttt{AdjacencyMatrixGraph}. A primeira utiliza uma estrutura baseada em lista de adjacência \texttt{List[Dict[int, float]]}, sendo adequada para grafos esparsos, enquanto a segunda utiliza uma matriz de adjacência $N \times N$ com valores \texttt{float|None}, permitindo acesso direto às arestas. A classe \texttt{GithubMiner} é responsável pela coleta dos dados da API e pela construção das estruturas de grafo. Já a classe \texttt{GraphAnalytics} concentra os algoritmos de análise, incluindo métricas de centralidade, agrupamento e relacionamento entre os colaboradores.
 
@@ -208,13 +177,11 @@ O sistema organiza sua arquitetura em três principais responsabilidades. A clas
 
 \subsection{Diagrama de Componentes}
 
-Arquitetura modular em 5 componentes: (i) \textit{Main Application} — orquestra fluxo; (ii) \textit{GitHub Miner} — coleta API; (iii) \textit{Graph Storage} — instancia grafos; (iv) \textit{Analytics Engine} — métricas; (v) \textit{Export Module} — saída CSV/relatórios.
+Arquitetura modular em 5 componentes: (i) \textit{Main Application} --- orquestra fluxo; (ii) \textit{GitHub Miner} --- coleta API; (iii) \textit{Graph Storage} --- instancia grafos; (iv) \textit{Analytics Engine} --- métricas; (v) \textit{Export Module} --- saída CSV/relatórios.
 
 \subsection{Fluxo de Mineração}
 
 (1) Aplicação invoca \texttt{fetch\_data(pages=5)}; (2) minerador requisita \texttt{/repos/owner/repo/issues}; (3) para cada item coleta comentários, revisões, merges; (4) acumula pesos em dicionários por tipo; (5) \texttt{build\_graphs()} mapeia usuários a IDs, instancia 4 grafos \texttt{AdjacencyListGraph}; (6) exporta para CSV (Source, Target, Weight).
-
-% ----------------------------------------------------------------------------
 
 % ============================================================================
 % 4. ARQUITETURA DA FERRAMENTA
@@ -223,7 +190,7 @@ Arquitetura modular em 5 componentes: (i) \textit{Main Application} — orquestr
 
 A ferramenta está organizada em 3 camadas:
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \begin{tikzpicture}[
     node distance=0.9cm,
@@ -253,7 +220,7 @@ A ferramenta está organizada em 3 camadas:
 
 \texttt{AdjacencyListGraph} usa listas de dicionários ($O(E)$ espaço, eficiente para redes esparsas). \texttt{AdjacencyMatrixGraph} usa matriz $N \times N$ (acesso $O(1)$ a arestas, cache de in-degrees).
 
-\subsection{Camada 2: Mineração — \texttt{GithubMiner}}
+\subsection{Camada 2: Mineração --- \texttt{GithubMiner}}
 
 Responsável por toda interação com a API REST do GitHub. Recebe token e repositório via \texttt{.env}.
 
@@ -262,7 +229,7 @@ Responsável por toda interação com a API REST do GitHub. Recebe token e repos
   \item \texttt{build\_graphs()}: mapeia logins para IDs sequenciais e instancia os 4 grafos como \texttt{AdjacencyListGraph}
 \end{itemize}
 
-\subsection{Camada 3: Análise — \texttt{GraphAnalytics}}
+\subsection{Camada 3: Análise --- \texttt{GraphAnalytics}}
 
 Recebe um \texttt{AbstractGraph} e implementa todos os algoritmos em Python puro, sem bibliotecas externas de grafos.
 
@@ -272,7 +239,7 @@ Sem bibliotecas externas (NetworkX); sem self-loops (verificação $u \neq v$); 
 
 \subsection{Testes Unitários}
 
-84 testes cobrindo: (i) API de grafos (ambas implementações): arestas, graus, relações, propriedades; (ii) mineração: mock da API, parsing, acumulação de pesos; (iii) casos extremos (grafos vazios, índices inválidos). Todos passam ✓.
+84 testes cobrindo: (i) API de grafos (ambas implementações): arestas, graus, relações, propriedades; (ii) mineração: mock da API, parsing, acumulação de pesos; (iii) casos extremos (grafos vazios, índices inválidos). Todos passam.
 
 \subsection{Aplicação de Demonstração}
 
@@ -338,7 +305,7 @@ Mede influência via importância recursiva dos vizinhos. Resolvido via power it
 
 A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repositório de automação WhatsApp), coletando 5 páginas de issues e pull requests (máximo 500 itens). O dataset compreende o histórico completo de interações do repositório até a data de execução.
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Estatísticas da rede analisada (repositório devlikeapro/waha).}
   \label{tab:stats}
@@ -347,7 +314,7 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
     \textbf{Métrica} & \textbf{Valor} \\
     \midrule
     Número de vértices (colaboradores únicos) & 481 \\
-    Número de arestas — Grafo Integrado & 1409 \\
+    Número de arestas --- Grafo Integrado & 1409 \\
     Densidade da rede & 0,006103 \\
     Grafo fracamente conectado & Não \\
     Clustering médio & 0,148564 \\
@@ -359,7 +326,7 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
 
 \subsection{Análise de Estrutura}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Métricas estruturais da rede (repositório devlikeapro/waha).}
   \label{tab:estrutura}
@@ -375,9 +342,9 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
   \end{tabular}
 \end{table}
 
-\subsection{Centralidade de Grau — Top Colaboradores}
+\subsection{Centralidade de Grau --- Top Colaboradores}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Graus (in/out) dos 5 principais colaboradores.}
   \label{tab:graus}
@@ -394,9 +361,9 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
   \end{tabular}
 \end{table}
 
-\subsection{Betweenness Centrality — Conectores da Rede}
+\subsection{Betweenness Centrality --- Conectores da Rede}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Top 5 colaboradores por betweenness centrality (pontes da rede).}
   \label{tab:betweenness}
@@ -415,9 +382,9 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
 
 \textbf{Devlikepro} (0,608) é a ponte dominante: 60,8\% de todos caminhos mais curtos passam por ela. \textbf{Bergpinheiro} (0,164) é a segunda; concentra 16,4\%.
 
-\subsection{Closeness Centrality — Proximidade}
+\subsection{Closeness Centrality --- Proximidade}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Top 5 usuários isolados e devlikepro por closeness centrality.}
   \label{tab:closeness}
@@ -437,9 +404,9 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
 
 Closeness 1,0 = usuários isolados (distância infinita aos outros = inf normalizado a 1). Devlikepro (0,6017) = mais próxima a todos entre os ativos.
 
-\subsection{PageRank e Eigenvector Centrality — Influência}
+\subsection{PageRank e Eigenvector Centrality --- Influência}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Top 5 colaboradores: PageRank vs. Eigenvector Centrality.}
   \label{tab:centrality}
@@ -449,7 +416,7 @@ Closeness 1,0 = usuários isolados (distância infinita aos outros = inf normali
     \midrule
     devlikepro         & 0,1171 & 0,5895 \\
     bergpinheiro       & 0,0508 & 0,2947 \\
-    vicentemarciot27   & 0,0175 & — \\
+    vicentemarciot27   & 0,0175 & --- \\
     OrionZap           & 0,0139 & 0,1441 \\
     github-actions[bot] & 0,0134 & 0,1581 \\
     \bottomrule
@@ -464,7 +431,7 @@ Coeficiente médio: 0,1445. Top 10 com máximo local (1,0): usuários formando t
 
 \subsection{Detecção de Comunidades}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Distribuição de comunidades (top 5 maiores).}
   \label{tab:comunidades}
@@ -483,9 +450,9 @@ Coeficiente médio: 0,1445. Top 10 com máximo local (1,0): usuários formando t
 
 137 comunidades detectadas. Maior (67 membros) = ~14\% da rede. Muitas comunidades pequenas ($\leq 3$ membros).
 
-\subsection{Bridging Ties — Conectores entre Comunidades}
+\subsection{Bridging Ties --- Conectores entre Comunidades}
 
-\begin{table}[h]
+\begin{table}[H]
   \centering
   \caption{Top 5 usuários que conectam múltiplas comunidades.}
   \label{tab:bridging}
@@ -513,11 +480,16 @@ CSV com 1409 arestas (Source, Target, Weight). Gephi visualiza: núcleo central 
 % ============================================================================
 \section{Responsabilidades dos Integrantes}\label{sec:responsabilidades}
 
+A seguir, resumo das contribuições de cada integrante do grupo:
+
 \begin{itemize}
-  \item \textbf{Davi Nunes Carvalho:} Minerador GitHub (GithubMiner), estruturas de grafos (AbstractGraph, AdjacencyListGraph), exportação Gephi, integração API.
-  \item \textbf{Luiz Fernando Batista Moreira:} Análise de grafos (GraphAnalytics), PageRank, betweenness, eigenvector centrality, detecção de comunidades.
-  \item \textbf{Josué Carlos Goulart dos Reis:} Testes unitários (84 testes), mock API, validação de API, documentação técnica.
-  \item \textbf{João Victor Russo Marquito:} Diagrama UML, relatório LaTeX, definição formal de modelagem, interpretação de resultados.
+  \item \textbf{Davi Nunes Carvalho --- Mineração e Núcleo de Grafos:} responsável pelo minerador \texttt{GithubMiner} (coleta de issues, PRs, comentários, revisões e merges via API REST do GitHub) e pelas estruturas de dados de grafos (\texttt{AbstractGraph} e \texttt{AdjacencyListGraph}). Implementou também a exportação para o Gephi e a integração com a API.
+
+  \item \textbf{Luiz Fernando Batista Moreira --- Análise de Redes:} responsável pela classe \texttt{GraphAnalytics} e pela implementação, em Python puro, dos algoritmos de análise: PageRank, betweenness, closeness, eigenvector centrality e detecção de comunidades (Louvain).
+
+  \item \textbf{Josué Carlos Goulart dos Reis --- Testes e Validação:} responsável pelos 84 testes unitários, pelo mock da API para testes, pela validação da mineração e pela documentação técnica do projeto.
+
+  \item \textbf{João Victor Russo Marquito --- Modelagem e Documentação:} responsável pelos diagramas UML, pela redação do relatório em \LaTeX{}, pela definição formal da modelagem do grafo e pela interpretação dos resultados obtidos.
 \end{itemize}
 
 % ============================================================================
@@ -560,7 +532,7 @@ Este trabalho implementou com sucesso uma ferramenta de análise de redes de col
 \bibitem{github_api}
   GitHub Documentation.
   \textit{GitHub REST API}.
-  https://docs.github.com/en/rest, 2024.
+  \url{https://docs.github.com/en/rest}, 2024.
 
 \end{thebibliography}
 
