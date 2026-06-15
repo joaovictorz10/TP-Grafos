@@ -204,37 +204,15 @@ Esta seção apresenta os artefatos UML que descrevem a arquitetura estática, c
 
 O sistema organiza sua arquitetura em três principais responsabilidades. A classe abstrata \texttt{AbstractGraph} define uma interface comum para operações sobre grafos, sendo implementada pelas classes concretas \texttt{AdjacencyListGraph} e \texttt{AdjacencyMatrixGraph}. A primeira utiliza uma estrutura baseada em lista de adjacência \texttt{List[Dict[int, float]]}, sendo adequada para grafos esparsos, enquanto a segunda utiliza uma matriz de adjacência $N \times N$ com valores \texttt{float|None}, permitindo acesso direto às arestas. A classe \texttt{GithubMiner} é responsável pela coleta dos dados da API e pela construção das estruturas de grafo. Já a classe \texttt{GraphAnalytics} concentra os algoritmos de análise, incluindo métricas de centralidade, agrupamento e relacionamento entre os colaboradores.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{modelagem/Diagrama_de_classes.png}
-    \caption{Estrutura de classes: AbstractGraph, implementações e módulos de mineração/análise.}
-    \label{fig:diagrama-classes}
-\end{figure}
-% ----------------------------------------------------------------------------
+\textbf{Estrutura UML:} Classe abstrata \texttt{AbstractGraph} com 20+ métodos define interface comum. Implementações concretas \texttt{AdjacencyListGraph} e \texttt{AdjacencyMatrixGraph} fornecem representações complementares. \texttt{GithubMiner} coleta via API, \texttt{GraphAnalytics} executa algoritmos.
+
 \subsection{Diagrama de Componentes}
-% ----------------------------------------------------------------------------
 
-Arquitetura modular em cinco componentes: (i) \textit{Main Application} — orquestrador central; (ii) \textit{GitHub Miner} — coleta via API REST; (iii) \textit{Graph Storage} — instancia estruturas; (iv) \textit{Analytics Engine} — calcula métricas; (v) \textit{Export Module} — serializa em CSV e relatórios.
+Arquitetura modular em 5 componentes: (i) \textit{Main Application} — orquestra fluxo; (ii) \textit{GitHub Miner} — coleta API; (iii) \textit{Graph Storage} — instancia grafos; (iv) \textit{Analytics Engine} — métricas; (v) \textit{Export Module} — saída CSV/relatórios.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{modelagem/diagrama_componentes.png}
-    \caption{Arquitetura de componentes independentes.}
-    \label{fig:diagrama-componentes}
-\end{figure}
+\subsection{Fluxo de Mineração}
 
-% ----------------------------------------------------------------------------
-\subsection{Diagrama de Sequência — Mineração}
-% ----------------------------------------------------------------------------
-
-Narra a interação entre aplicação, minerador e API: (1) aplicação invoca \texttt{fetch\_data(pages=5)}; (2) minerador requisita \texttt{/repos/\{owner\}/\{repo\}/issues} com paginação; (3) para cada item: coleta comentários, revisões, merges; (4) respostas processadas, usuários agregados, pesos acumulados; (5) retorno com grafos instanciados.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{modelagem/diagrama_sequencia_mineracao.png}
-    \caption{Fluxo de interação durante coleta de dados.}
-    \label{fig:diagrama-sequencia}
-\end{figure}
+(1) Aplicação invoca \texttt{fetch\_data(pages=5)}; (2) minerador requisita \texttt{/repos/owner/repo/issues}; (3) para cada item coleta comentários, revisões, merges; (4) acumula pesos em dicionários por tipo; (5) \texttt{build\_graphs()} mapeia usuários a IDs, instancia 4 grafos \texttt{AdjacencyListGraph}; (6) exporta para CSV (Source, Target, Weight).
 
 % ----------------------------------------------------------------------------
 
@@ -313,7 +291,7 @@ Todas as métricas são implementadas na classe \texttt{GraphAnalytics} em Pytho
 C_D(v) = \frac{\text{in-degree}(v) + \text{out-degree}(v)}{2(n-1)}
 \]
 
-In-degree = número de usuários que interagiram \textit{com} $v$; out-degree = número de usuários que $v$ interagiu \textit{com}.
+Mede quantas conexões diretas cada colaborador tem. In-degree = usuários que interagiram \textit{com} $v$; out-degree = usuários que $v$ interagiu \textit{com}.
 
 \subsection{Betweenness Centrality}
 
@@ -321,7 +299,7 @@ In-degree = número de usuários que interagiram \textit{com} $v$; out-degree = 
 C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}
 \]
 
-Onde $\sigma_{st}$ é o número de caminhos mais curtos entre $s$ e $t$, e $\sigma_{st}(v)$ é quantos passam por $v$. Implementado via algoritmo de Brandes $O(VE)$. Valor alto indica "conector" entre grupos.
+Mede quantos caminhos mais curtos passam por $v$. Valor alto = "conector" ou "ponte" entre grupos. Implementado via algoritmo de Brandes $O(VE)$.
 
 \subsection{Closeness Centrality}
 
@@ -329,7 +307,7 @@ Onde $\sigma_{st}$ é o número de caminhos mais curtos entre $s$ e $t$, e $\sig
 C_C(v) = \frac{n-1}{\sum_{t \neq v} d(v,t)}
 \]
 
-Valor alto = colaborador próximo a todos (poucos hops).
+Mede proximidade a todos os outros. Valor alto = colaborador próximo a todos (poucos hops). Identifica quem tem acesso rápido à informação.
 
 \subsection{PageRank}
 
@@ -337,7 +315,7 @@ Valor alto = colaborador próximo a todos (poucos hops).
 \text{PR}(v) = \frac{1-d}{n} + d \sum_{u \to v} \frac{\text{PR}(u)}{\text{out-degree}(u)}
 \]
 
-Damping factor $d = 0{,}85$. Implementado via power iteration com convergência em $\epsilon = 10^{-6}$.
+Damping factor $d = 0{,}85$. Implementado via power iteration. Mede influência ponderada pela importância dos conectados.
 
 \subsection{Eigenvector Centrality}
 
@@ -345,11 +323,11 @@ Damping factor $d = 0{,}85$. Implementado via power iteration com convergência 
 x_v = \lambda^{-1} \sum_{u \to v} x_u
 \]
 
-Resolvido via power iteration. Similar ao PageRank, mas sem damping factor.
+Mede influência via importância recursiva dos vizinhos. Resolvido via power iteration.
 
 \subsection{Clustering, Densidade, Assortatividade e Comunidades}
 
-Clustering $C(v) = \frac{\text{arestas entre vizinhos}}{\binom{k_v}{2}}$ mede triângulos. Densidade $\rho = \frac{|E|}{|V|(|V|-1)}$ é proporção de conexões. Assortatividade (Pearson sobre graus) mede preferência de conexão. Louvain detecta comunidades. Bridging ties = usuários conectando múltiplas comunidades.
+\textbf{Clustering:} $C(v) = \frac{\text{arestas entre vizinhos}}{\binom{k_v}{2}}$ mede triângulos locais. \textbf{Densidade:} $\rho = \frac{|E|}{|V|(|V|-1)}$ = proporção de conexões. \textbf{Assortatividade:} correlação de Pearson sobre graus; positiva = preferência por pares similares. \textbf{Comunidades:} Louvain detecta subgrupos. \textbf{Bridging ties:} usuários conectando comunidades distintas.
 
 % ============================================================================
 % 6. RESULTADOS E DISCUSSÃO
@@ -381,56 +359,181 @@ A ferramenta foi executada sobre o repositório \texttt{devlikeapro/waha} (repos
 
 \subsection{Análise de Estrutura}
 
-Densidade 0,006103: rede esparsa típica de open source. Clustering 0,1486: triângulos raros. Assortatividade $-0,249$: padrão dissortativo hub-and-spoke (hubs conectam-se com periféricos). 135 comunidades: reflete baixa coesão (muitos isolados de tamanho 1).
-
-\subsection{Top 5 Colaboradores por PageRank e Centralidade}
-
 \begin{table}[h]
   \centering
-  \caption{Colaboradores mais influentes por PageRank (repositório devlikeapro/waha).}
-  \label{tab:pagerank}
-  \begin{tabular}{l|r|r}
+  \caption{Métricas estruturais da rede (repositório devlikeapro/waha).}
+  \label{tab:estrutura}
+  \begin{tabular}{l|r|p{6cm}}
     \toprule
-    \textbf{Usuário} & \textbf{PageRank} & \textbf{In-Degree} \\
+    \textbf{Métrica} & \textbf{Valor} & \textbf{Interpretação} \\
     \midrule
-    devlikepro           & 0,11730 & 186 \\
-    bergpinheiro         & 0,05065 & 86  \\
-    vicentemarciot27     & 0,01745 & 22  \\
-    OrionZap             & 0,01388 & 26  \\
-    github-actions[bot]  & 0,01330 & 25  \\
+    Densidade & 0,006044 & Rede muito esparsa; típica de open source com periferia dispersa \\
+    Clustering médio & 0,1445 & Triângulos raros; baixa tendência de formação de cliques \\
+    Assortatividade & $-0,250$ & Padrão dissortativo: hubs conectam-se com periféricos \\
+    Comunidades (Louvain) & 137 & Muitos isolados; estrutura fragmentada \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\textbf{Devlikepro:} PR 0,117 (8.8× top-2), in-degree 186, betweenness 0,619 (conecta 79/135 comunidades). Mantenedor principal. \textbf{Bergpinheiro:} PR 0,050, in-degree 86; co-mantenedor. \textbf{Padrão:} Top-5 concentram 21% do PageRank total (5/481 usuários).
+\subsection{Centralidade de Grau — Top Colaboradores}
+
+\begin{table}[h]
+  \centering
+  \caption{Graus (in/out) dos 5 principais colaboradores.}
+  \label{tab:graus}
+  \begin{tabular}{l|r|r|r}
+    \toprule
+    \textbf{Usuário} & \textbf{In-Degree} & \textbf{Out-Degree} & \textbf{Total} \\
+    \midrule
+    devlikepro           & 185 & 192 & 377 \\
+    bergpinheiro         & 86  & 94  & 180 \\
+    vicentemarciot27     & 22  & 18  & 40  \\
+    github-actions[bot]  & 25  & 28  & 53  \\
+    OrionZap             & 26  & 15  & 41  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Betweenness Centrality — Conectores da Rede}
+
+\begin{table}[h]
+  \centering
+  \caption{Top 5 colaboradores por betweenness centrality (pontes da rede).}
+  \label{tab:betweenness}
+  \begin{tabular}{l|r}
+    \toprule
+    \textbf{Usuário} & \textbf{Betweenness} \\
+    \midrule
+    devlikepro         & 0,6078 \\
+    bergpinheiro       & 0,1641 \\
+    vicentemarciot27   & 0,0570 \\
+    github-actions[bot] & 0,0457 \\
+    ehussain           & 0,0414 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Devlikepro} (0,608) é a ponte dominante: 60,8\% de todos caminhos mais curtos passam por ela. \textbf{Bergpinheiro} (0,164) é a segunda; concentra 16,4\%.
+
+\subsection{Closeness Centrality — Proximidade}
+
+\begin{table}[h]
+  \centering
+  \caption{Top 5 usuários isolados e devlikepro por closeness centrality.}
+  \label{tab:closeness}
+  \begin{tabular}{l|r}
+    \toprule
+    \textbf{Usuário} & \textbf{Closeness} \\
+    \midrule
+    KempesBarbosa      & 1,0000 \\
+    NatanaelRibF       & 1,0000 \\
+    VikthorPenaloz     & 1,0000 \\
+    nicolasvahidzein   & 1,0000 \\
+    reeshan            & 1,0000 \\
+    devlikepro         & 0,6017 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Closeness 1,0 = usuários isolados (distância infinita aos outros = inf normalizado a 1). Devlikepro (0,6017) = mais próxima a todos entre os ativos.
+
+\subsection{PageRank e Eigenvector Centrality — Influência}
+
+\begin{table}[h]
+  \centering
+  \caption{Top 5 colaboradores: PageRank vs. Eigenvector Centrality.}
+  \label{tab:centrality}
+  \begin{tabular}{l|r|r}
+    \toprule
+    \textbf{Usuário} & \textbf{PageRank} & \textbf{Eigenvector} \\
+    \midrule
+    devlikepro         & 0,1171 & 0,5895 \\
+    bergpinheiro       & 0,0508 & 0,2947 \\
+    vicentemarciot27   & 0,0175 & — \\
+    OrionZap           & 0,0139 & 0,1441 \\
+    github-actions[bot] & 0,0134 & 0,1581 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+PageRank e Eigenvector correlacionam: devlikepro 11,7\% (PageRank) e 58,9\% (Eigenvector) = principal influenciador.
+
+\subsection{Clustering Coefficient}
+
+Coeficiente médio: 0,1445. Top 10 com máximo local (1,0): usuários formando triângulos fechados. Exemplo: \textit{Biasolis}, \textit{DiegoAugustusCunha}, etc. formam subgrupos coesos.
+
+\subsection{Detecção de Comunidades}
+
+\begin{table}[h]
+  \centering
+  \caption{Distribuição de comunidades (top 5 maiores).}
+  \label{tab:comunidades}
+  \begin{tabular}{l|r}
+    \toprule
+    \textbf{Comunidade} & \textbf{Tamanho} \\
+    \midrule
+    Comunidade 15 & 67 membros \\
+    Comunidade 19 & 33 membros \\
+    Comunidade 73 & 22 membros \\
+    Comunidade 9  & 14 membros \\
+    Comunidade 34 & 12 membros \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+137 comunidades detectadas. Maior (67 membros) = ~14\% da rede. Muitas comunidades pequenas ($\leq 3$ membros).
+
+\subsection{Bridging Ties — Conectores entre Comunidades}
+
+\begin{table}[h]
+  \centering
+  \caption{Top 5 usuários que conectam múltiplas comunidades.}
+  \label{tab:bridging}
+  \begin{tabular}{l|r}
+    \toprule
+    \textbf{Usuário} & \textbf{Comunidades conectadas} \\
+    \midrule
+    devlikepro       & 79 \\
+    bergpinheiro     & 37 \\
+    github-actions[bot] & 20 \\
+    OrionZap         & 17 \\
+    matteus-siqueira & 13 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Devlikepro conecta 79 de 137 comunidades (57,7\%); essencial para coesão global. Bergpinheiro conecta 37 (27\%).
 
 \subsection{Exportação para Gephi}
 
-CSV com colunas \texttt{Source}, \texttt{Target}, \texttt{Weight} (1409 arestas). Gephi: Import → Force Atlas 2 → Size by In-Degree → Color by Modularity. Visualiza núcleo central (top-5) e periferia esparsa.
+CSV com 1409 arestas (Source, Target, Weight). Gephi visualiza: núcleo central (top-5 com maior in-degree), periferia esparsa, comunidades por cor modularity, tamanho de nó por degree.
 
 % ============================================================================
 % 7. RESPONSABILIDADES DOS INTEGRANTES
 % ============================================================================
+\section{Responsabilidades dos Integrantes}\label{sec:responsabilidades}
 
+\begin{itemize}
+  \item \textbf{Davi Nunes Carvalho:} Minerador GitHub (GithubMiner), estruturas de grafos (AbstractGraph, AdjacencyListGraph), exportação Gephi, integração API.
+  \item \textbf{Luiz Fernando Batista Moreira:} Análise de grafos (GraphAnalytics), PageRank, betweenness, eigenvector centrality, detecção de comunidades.
+  \item \textbf{Josué Carlos Goulart dos Reis:} Testes unitários (84 testes), mock API, validação de API, documentação técnica.
+  \item \textbf{João Victor Russo Marquito:} Diagrama UML, relatório LaTeX, definição formal de modelagem, interpretação de resultados.
+\end{itemize}
 
 % ============================================================================
 % 8. CONCLUSÃO
 % ============================================================================
 \section{Conclusão}\label{sec:conclusao}
 
-Este trabalho implementou uma ferramenta completa de análise de redes de colaboração no GitHub:
+Este trabalho implementou com sucesso uma ferramenta de análise de redes de colaboração em GitHub atendendo todos os requisitos das 3 etapas:
 
-\begin{enumerate}
-  \item \textbf{Estruturas de dados:} \texttt{AbstractGraph} com duas implementações (\texttt{AdjacencyListGraph} e \texttt{AdjacencyMatrixGraph}), toda a API obrigatória implementada
-  \item \textbf{Mineração:} \texttt{GithubMiner} com coleta de comentários, fechamentos, revisões e merges, construindo 4 grafos distintos
-  \item \textbf{Métricas:} 10+ métricas em Python puro via \texttt{GraphAnalytics}
-  \item \textbf{Exportação:} CSV compatível com Gephi via \texttt{exportToGEPHI}
-  \item \textbf{Testes:} 84 testes unitários cobrindo a API de grafos e a mineração com mock
-\end{enumerate}
+\textbf{Etapa 1:} Modelagem com 4 grafos (G1, G2, G3, integrado), estratégia de coleta de 5 tipos de interação, esquema de pesos refletindo importância técnica.
 
-============================================================================
-% 9. REQUISITOS ATENDIDOS DO ENUNCIADO
-% ============================================================================
+\textbf{Etapa 2:} Implementação de estruturas de dados em Python puro (\texttt{AbstractGraph}, \texttt{AdjacencyListGraph}, \texttt{AdjacencyMatrixGraph}), API completa (20+ métodos), 84 testes unitários, exportação Gephi, minerador robusto com tratamento de erros.
+
+\textbf{Etapa 3:} Análise via 10+ métricas: grau, betweenness, closeness, PageRank, eigenvector, clustering, densidade, assortatividade, detecção de comunidades (Louvain), bridging ties. Resultados validados e interpretados sobre repositório com 481 usuários e 1409 arestas.
+
+\textbf{Principais achados:} Devlikepro é figura central (PR 0,117, betweenness 0,608, conecta 79 comunidades). Rede dissortativa (hub-and-spoke) com estrutura fragmentada (137 comunidades). Densidade 0,006 = típica de open source com periferia dispersa.
 
 \begin{thebibliography}{9}
 
