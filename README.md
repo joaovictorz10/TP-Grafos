@@ -187,8 +187,3 @@ O relatório completo (LaTeX, template SBC) está em
 contendo: justificativa da escolha do repositório, modelagem formal dos grafos,
 esquema de pesos, diagramas, definição matemática de cada métrica e discussão dos
 resultados.
-
-## Apresentação em vídeo
-
-O roteiro de fala para o vídeo de demonstração (até 2 minutos) está em
-[ROTEIRO_VIDEO.md](ROTEIRO_VIDEO.md).
