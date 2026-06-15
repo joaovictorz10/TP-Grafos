@@ -1,7 +1,12 @@
-from src.api_github.miner import GithubMiner
-from src.analytics.graph_analytics import GraphAnalytics
-from src.core.adjacency_matrix_graph import AdjacencyMatrixGraph
-from src.core.adjacency_list_graph import AdjacencyListGraph
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from etapa1.miner import GithubMiner
+from etapa3.graph_analytics import GraphAnalytics
+from etapa2.core.adjacency_matrix_graph import AdjacencyMatrixGraph
+from etapa2.core.adjacency_list_graph import AdjacencyListGraph
 
 
 def demo_api_completa(g_list, g_matrix):

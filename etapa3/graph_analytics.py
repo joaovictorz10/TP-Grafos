@@ -1,5 +1,5 @@
 from collections import deque
-from src.core.abstract_graph import AbstractGraph
+from etapa2.core.abstract_graph import AbstractGraph
 
 class GraphAnalytics:
     def __init__(self, graph: AbstractGraph):

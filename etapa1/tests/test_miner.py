@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from collections import defaultdict
 
-from src.api_github.miner import GithubMiner
+from etapa1.miner import GithubMiner
 
 
 # ---------------------------------------------------------------------------
