@@ -220,8 +220,8 @@ resultados.
 
 ## Apresentação em vídeo
 
-O roteiro de fala para o vídeo de demonstração (até 2 minutos) está em
-[`ROTEIRO_VIDEO.md`](ROTEIRO_VIDEO.md).
+https://youtu.be/09rLF5PBQ9E
+
 
 ## Solução de problemas
 
